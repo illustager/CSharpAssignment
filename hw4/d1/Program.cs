@@ -1,9 +1,14 @@
+using System.Xml.Serialization;
+
 namespace d1;
 
+[XmlRoot("Customer")]
 public class Customer
 {
     public string Id { get; set; }
     public string Name { get; set; }
+
+    public Customer() { Id = ""; Name = ""; }
 
     public Customer(string id, string name)
     {
@@ -18,11 +23,14 @@ public class Customer
     public override int GetHashCode() => Id.GetHashCode();
 }
 
+[XmlRoot("Goods")]
 public class Goods
 {
     public string Id { get; set; }
     public string Name { get; set; }
     public decimal Price { get; set; }
+
+    public Goods() { Id = ""; Name = ""; Price = 0; }
 
     public Goods(string id, string name, decimal price)
     {
@@ -38,11 +46,15 @@ public class Goods
     public override int GetHashCode() => Id.GetHashCode();
 }
 
+[XmlRoot("OrderDetails")]
 public class OrderDetails
 {
     public Goods Goods { get; set; }
     public int Quantity { get; set; }
+    [XmlIgnore]
     public decimal Amount => Goods.Price * Quantity;
+
+    public OrderDetails() { Goods = new Goods(); Quantity = 0; }
 
     public OrderDetails(Goods goods, int quantity)
     {
@@ -57,12 +69,18 @@ public class OrderDetails
     public override int GetHashCode() => Goods.GetHashCode();
 }
 
+[XmlRoot("Order")]
 public class Order : IComparable<Order>
 {
     public string OrderId { get; set; }
     public Customer Customer { get; set; }
-    public List<OrderDetails> Details { get; } = new();
+    [XmlArray("Details")]
+    [XmlArrayItem("OrderDetails")]
+    public List<OrderDetails> Details { get; set; } = new();
+    [XmlIgnore]
     public decimal TotalAmount => Details.Sum(d => d.Amount);
+
+    public Order() { OrderId = ""; Customer = new Customer(); }
 
     public Order(string orderId, Customer customer)
     {
@@ -144,6 +162,20 @@ public class OrderService
     {
         Sort();
         return orders;
+    }
+
+    public void Export(string filePath)
+    {
+        var serializer = new XmlSerializer(typeof(List<Order>));
+        using var writer = new StreamWriter(filePath);
+        serializer.Serialize(writer, orders);
+    }
+
+    public void Import(string filePath)
+    {
+        var serializer = new XmlSerializer(typeof(List<Order>));
+        using var reader = new StreamReader(filePath);
+        orders = (List<Order>)serializer.Deserialize(reader)!;
     }
 }
 
