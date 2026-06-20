@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="d1/d1.csproj" />
+  <Project Path="d2/d2.csproj" />
+  <Project Path="d3/d3.csproj" />
+</Solution>
